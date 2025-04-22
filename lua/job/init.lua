@@ -267,6 +267,8 @@ function M.send(id, data) -- {{{
   end
 end
 
+--- @param id integer job id
+--- @param t  string  std type, stdin, stdout or stderr
 function M.chanclose(id, t)
   local jobobj = _jobs['jobid_' .. id]
 
@@ -293,6 +295,7 @@ function M.chanclose(id, t)
   end
 end
 
+--- @param id integer stop job with specific {id}
 function M.stop(id)
   local jobobj = _jobs['jobid_' .. id]
 
