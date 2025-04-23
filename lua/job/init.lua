@@ -76,6 +76,7 @@ end
 --- 0: if type of cmd is wrong
 --- -1: if cmd[1] is not executable
 function M.start(cmd, opts)
+    opts = opts or {}
     local command = ''
     local argv = {}
     if type(cmd) == 'string' then
