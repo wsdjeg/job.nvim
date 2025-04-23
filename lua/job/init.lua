@@ -299,6 +299,9 @@ end
 
 --- @param id integer stop job with specific {id}
 function M.stop(id)
+    if not id then
+        return
+    end
     local jobobj = _jobs['jobid_' .. id]
 
     if not jobobj then
