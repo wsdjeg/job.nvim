@@ -72,7 +72,7 @@ job 44 exit code:0 single:0
 | function                    | description               |
 | --------------------------- | ------------------------- |
 | `job.start(cmd, opt)`       | start a new job           |
-| `job.stop(jobid, single)`   | stop the job with single  |
+| `job.stop(jobid, signal)`   | stop the job with signal  |
 | `job.send(jobid, data)`     | send data to specific job |
 | `job.chanclose(jobid, std)` | close channel of a job    |
 

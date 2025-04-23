@@ -299,7 +299,7 @@ function M.chanclose(id, t)
 end
 
 --- @param id integer stop job with specific {id}
-function M.stop(id, single)
+function M.stop(id, signal)
     if not id then
         return
     end
@@ -310,6 +310,6 @@ function M.stop(id, single)
     end
 
     local handle = jobobj.handle
-    handle:kill(single)
+    handle:kill(signal)
 end
 return M
