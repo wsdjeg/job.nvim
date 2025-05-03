@@ -128,14 +128,11 @@ function M.start(cmd, opts)
     _jobid = _jobid + 1
     local current_id = _jobid
     local exit_cb
+    -- https://github.com//neovim/neovim/blob/d9353bd44285a9a3abbe97410730fbf9a252aee3/runtime/lua/vim/_system.lua#L275
+    -- #30846: Do not close stdout/stderr here, as they may still have data to
+    -- read. They will be closed in uv.read_start on EOF.
     if opts.on_exit then
         exit_cb = function(code, singin)
-            if stdout and not stdout:is_closing() then
-                stdout:close()
-            end
-            if stderr and not stderr:is_closing() then
-                stderr:close()
-            end
             if stdin and not stdin:is_closing() then
                 stdin:close()
             end
@@ -151,12 +148,6 @@ function M.start(cmd, opts)
         end
     else
         exit_cb = function(code, singin)
-            if stdout and not stdout:is_closing() then
-                stdout:close()
-            end
-            if stderr and not stderr:is_closing() then
-                stderr:close()
-            end
             if stdin and not stdin:is_closing() then
                 stdin:close()
             end
@@ -191,6 +182,10 @@ function M.start(cmd, opts)
                     vim.schedule(function()
                         opts.on_stdout(current_id, stdout_data)
                     end)
+                elseif data == nil then
+                    if stdout and not stdout:is_closing() then
+                        stdout:close()
+                    end
                 end
             end)
         else
@@ -202,9 +197,21 @@ function M.start(cmd, opts)
                     vim.schedule(function()
                         opts.on_stdout(current_id, stdout_data, 'stdout')
                     end)
+                elseif data == nil then
+                    if stdout and not stdout:is_closing() then
+                        stdout:close()
+                    end
                 end
             end)
         end
+    else
+        uv.read_start(stdout, function(err, data)
+            if data == nil then
+                if stdout and not stdout:is_closing() then
+                    stdout:close()
+                end
+            end
+        end)
     end
 
     if opts.on_stderr then
@@ -218,6 +225,10 @@ function M.start(cmd, opts)
                     vim.schedule(function()
                         opts.on_stderr(current_id, stderr_data)
                     end)
+                elseif data == nil then
+                    if stderr and not stderr:is_closing() then
+                        stderr:close()
+                    end
                 end
             end)
         else
@@ -229,9 +240,21 @@ function M.start(cmd, opts)
                     vim.schedule(function()
                         opts.on_stderr(current_id, stderr_data, 'stderr')
                     end)
+                elseif data == nil then
+                    if stderr and not stderr:is_closing() then
+                        stderr:close()
+                    end
                 end
             end)
         end
+    else
+        uv.read_start(stderr, function(err, data)
+            if data == nil then
+                if stderr and not stderr:is_closing() then
+                    stderr:close()
+                end
+            end
+        end)
     end
     return current_id
 end
