@@ -260,7 +260,7 @@ function M.start(cmd, opts)
 end
 
 --- @param id integer job id
---- @param data  string|table<string>  {data} may be a string or a table of string.
+--- @param data  string|table<string>|nil  {data} may be a string or a table of string.
 function M.send(id, data) -- {{{
     local jobobj = _jobs['jobid_' .. id]
 
