@@ -13,6 +13,8 @@ local uv = vim.loop
 local _jobs = {}
 local _jobid = 0
 
+local is_win = vim.fn.has('win32') == 1
+
 local function buffered_data(eof, data)
     data = data:gsub('\r', '')
     local std_data = vim.split(data, '\n')
@@ -112,6 +114,12 @@ function M.start(cmd, opts)
     else
         return 0
     end
+    if is_win then
+        local cmd1 = vim.fn.exepath(command)
+        if cmd1 ~= '' then
+            command = cmd1
+        end
+    end
 
     local stdin = uv.new_pipe()
     local stdout = uv.new_pipe()
@@ -160,6 +168,8 @@ function M.start(cmd, opts)
     end
 
     local handle, pid = uv.spawn(command, opt, exit_cb)
+
+    -- if handle is nil, we need to close all std channel
 
     _jobs['jobid_' .. _jobid] = new_job_obj(_jobid, handle, opts, {
         stdout = stdout,
