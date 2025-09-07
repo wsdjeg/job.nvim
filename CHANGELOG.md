@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/wsdjeg/job.nvim/compare/v1.0.0...v1.1.0) (2025-09-07)
+
+
+### Features
+
+* **start:** add JobOpts class ([af6acb4](https://github.com/wsdjeg/job.nvim/commit/af6acb431f9a2cecee4cd05e0594cefdced44dbd))
+* **start:** check opts.cwd ([9929d8b](https://github.com/wsdjeg/job.nvim/commit/9929d8b91e9302bf21aae0252a6c8d67f477f01d))
+
+
+### Bug Fixes
+
+* **handle:** handle spawn error ([dbea759](https://github.com/wsdjeg/job.nvim/commit/dbea75994c13fd30761de9b4e951d5e3d6dd488c))
+
 ## 1.0.0 (2025-09-06)
 
 
