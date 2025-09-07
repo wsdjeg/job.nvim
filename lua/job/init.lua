@@ -74,10 +74,13 @@ end
 --- @param cmd string|table<string> Spawns {cmd} as a job.
 --- @param opts table job options
 --- @return integer # jobid if job run successfully.
---- jobid: if job run successfully
---- 0: if type of cmd is wrong
---- -1: if cmd[1] is not executable
+---         0: if type of cmd is wrong
+---        -1: if cmd[1] is not executable
+---        -2: if opts.cwd is not a directory
 function M.start(cmd, opts)
+    if opts and opts.cwd and vim.fn.isdirectory(opts.cwd) ~= 1 then
+        return -2
+    end
     opts = opts or {}
     local command = ''
     local argv = {}
