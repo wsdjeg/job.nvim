@@ -71,8 +71,14 @@ local function setup_env(env, clear_env) -- {{{
 end
 -- }}}
 
+--- @class JobOpts
+--- @field on_stderr? function
+--- @field on_exit? function
+--- @field on_stdout? function
+--- @field cwd? string
+
 --- @param cmd string|table<string> Spawns {cmd} as a job.
---- @param opts table job options
+--- @param opts JobOpts job options
 --- @return integer # jobid if job run successfully.
 ---         0: if type of cmd is wrong
 ---        -1: if cmd[1] is not executable
