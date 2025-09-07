@@ -170,6 +170,18 @@ function M.start(cmd, opts)
     local handle, pid = uv.spawn(command, opt, exit_cb)
 
     -- if handle is nil, we need to close all std channel
+    if not handle then
+        if stdin and not stdin:is_closing() then
+            stdin:close()
+        end
+        if stdout and not stdout:is_closing() then
+            stdout:close()
+        end
+        if stderr and not stderr:is_closing() then
+            stderr:close()
+        end
+        return -1
+    end
 
     _jobs['jobid_' .. _jobid] = new_job_obj(_jobid, handle, opts, {
         stdout = stdout,
@@ -343,6 +355,8 @@ function M.stop(id, signal)
     end
 
     local handle = jobobj.handle
-    handle:kill(signal)
+    if handle then
+        handle:kill(signal)
+    end
 end
 return M
