@@ -76,6 +76,9 @@ end
 --- @field on_exit? function
 --- @field on_stdout? function
 --- @field cwd? string
+--- @field detached? boolean
+--- @field clear_env? boolean
+--- @field env? table
 
 --- @param cmd string|table<string> Spawns {cmd} as a job.
 --- @param opts JobOpts job options
@@ -164,7 +167,7 @@ function M.start(cmd, opts)
             end)
         end
     else
-        exit_cb = function(code, singin)
+        exit_cb = function(_, _)
             if stdin and not stdin:is_closing() then
                 stdin:close()
             end
