@@ -16,7 +16,7 @@ local _jobid = 0
 local is_win = vim.fn.has('win32') == 1
 
 local function buffered_data(eof, data)
-    data = data:gsub('\r', '')
+    data = data:gsub('\r\n', '\n')
     local std_data = vim.split(data, '\n')
     if #std_data > 1 and std_data[#std_data] == '' then
         std_data[1] = eof .. std_data[1]
@@ -31,6 +31,7 @@ local function buffered_data(eof, data)
         eof = ''
     elseif #std_data == 1 and std_data[#std_data] ~= '' then
         eof = std_data[#std_data]
+        std_data = {}
     end
     return eof, std_data
 end
@@ -213,9 +214,11 @@ function M.start(cmd, opts)
                     local stdout_data
                     _jobs['jobid_' .. current_id].state.stdout_eof, stdout_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stdout_eof, data)
-                    vim.schedule(function()
-                        opts.on_stdout(current_id, stdout_data)
-                    end)
+                    if #stdout_data > 0 then
+                        vim.schedule(function()
+                            opts.on_stdout(current_id, stdout_data)
+                        end)
+                    end
                 elseif data == nil then
                     if stdout and not stdout:is_closing() then
                         stdout:close()
@@ -228,9 +231,11 @@ function M.start(cmd, opts)
                     local stdout_data
                     _jobs['jobid_' .. current_id].state.stdout_eof, stdout_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stdout_eof, data)
-                    vim.schedule(function()
-                        opts.on_stdout(current_id, stdout_data, 'stdout')
-                    end)
+                    if #stdout_data > 0 then
+                        vim.schedule(function()
+                            opts.on_stdout(current_id, stdout_data, 'stdout')
+                        end)
+                    end
                 elseif data == nil then
                     if stdout and not stdout:is_closing() then
                         stdout:close()
@@ -256,9 +261,11 @@ function M.start(cmd, opts)
                     local stderr_data
                     _jobs['jobid_' .. current_id].state.stderr_eof, stderr_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stderr_eof, data)
-                    vim.schedule(function()
-                        opts.on_stderr(current_id, stderr_data)
-                    end)
+                    if #stderr_data > 0 then
+                        vim.schedule(function()
+                            opts.on_stderr(current_id, stderr_data)
+                        end)
+                    end
                 elseif data == nil then
                     if stderr and not stderr:is_closing() then
                         stderr:close()
@@ -271,9 +278,11 @@ function M.start(cmd, opts)
                     local stderr_data
                     _jobs['jobid_' .. current_id].state.stderr_eof, stderr_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stderr_eof, data)
-                    vim.schedule(function()
-                        opts.on_stderr(current_id, stderr_data, 'stderr')
-                    end)
+                    if #stderr_data > 0 then
+                        vim.schedule(function()
+                            opts.on_stderr(current_id, stderr_data, 'stderr')
+                        end)
+                    end
                 elseif data == nil then
                     if stderr and not stderr:is_closing() then
                         stderr:close()
