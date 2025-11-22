@@ -4,16 +4,16 @@ job manager for neovim
 
 <!-- vim-markdown-toc GFM -->
 
-* [Installation](#installation)
-* [Usage](#usage)
-* [APIs](#apis)
-* [Self-Promotion](#self-promotion)
+- [Installation](#installation)
+- [Usage](#usage)
+- [APIs](#apis)
+- [Self-Promotion](#self-promotion)
 
 <!-- vim-markdown-toc -->
 
 ## Installation
 
-using [nvim-plug](https://github.com/wsdjeg/nvim-plug)
+Using [nvim-plug](https://github.com/wsdjeg/nvim-plug)
 
 ```lua
 require("plug").add({
@@ -21,6 +21,12 @@ require("plug").add({
 		"wsdjeg/job.nvim",
 	},
 })
+```
+
+Using [luarocks](https://luarocks.org/)
+
+```
+luarocks install job.nvim
 ```
 
 ## Usage
