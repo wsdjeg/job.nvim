@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/wsdjeg/job.nvim/compare/v1.1.0...v1.2.0) (2025-11-22)
+
+
+### Features
+
+* add luarocks support ([c638f11](https://github.com/wsdjeg/job.nvim/commit/c638f11a9e376d72168b1b2f0c9dce65b992f7de))
+
 ## [1.1.0](https://github.com/wsdjeg/job.nvim/compare/v1.0.0...v1.1.0) (2025-11-02)
 
 
