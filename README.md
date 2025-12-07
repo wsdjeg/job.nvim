@@ -7,6 +7,8 @@ job manager for neovim
 - [Installation](#installation)
 - [Usage](#usage)
 - [APIs](#apis)
+- [Job options](#job-options)
+    - [encoding](#encoding)
 - [Self-Promotion](#self-promotion)
 
 <!-- vim-markdown-toc -->
@@ -81,6 +83,13 @@ job 44 exit code:0 single:0
 | `job.stop(jobid, signal)`   | stop the job with signal  |
 | `job.send(jobid, data)`     | send data to specific job |
 | `job.chanclose(jobid, std)` | close channel of a job    |
+
+## Job options
+
+### encoding
+
+If the output encoding of a job command is not UTF-8, you can set the encoding option manually.
+job.nvim will then automatically convert all standard output data to UTF-8.
 
 ## Self-Promotion
 
