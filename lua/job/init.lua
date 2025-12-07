@@ -81,6 +81,7 @@ end
 --- @field clear_env? boolean
 --- @field env? table
 --- @field encoding? string
+--- @field text? boolean -- handle stdout and stderr as text, replaces `\r\n` with `\n`
 
 --- @param cmd string|table<string> Spawns {cmd} as a job.
 --- @param opts JobOpts job options
@@ -222,6 +223,11 @@ function M.start(cmd, opts)
                                     return vim.fn.iconv(t, opts.encoding, 'utf-8')
                                 end, stdout_data)
                             end
+                            if opts.text then
+                                stdout_data = vim.tbl_map(function(t)
+                                    return t:gsub('\r\n', '\n')
+                                end, stdout_data)
+                            end
                             opts.on_stdout(current_id, stdout_data)
                         end)
                     end
@@ -238,12 +244,17 @@ function M.start(cmd, opts)
                     _jobs['jobid_' .. current_id].state.stdout_eof, stdout_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stdout_eof, data)
                     if #stdout_data > 0 then
-                        if opts.encoding then
-                            stdout_data = vim.tbl_map(function(t)
-                                return vim.fn.iconv(t, opts.encoding, 'utf-8')
-                            end, stdout_data)
-                        end
                         vim.schedule(function()
+                            if opts.encoding then
+                                stdout_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stdout_data)
+                            end
+                            if opts.text then
+                                stdout_data = vim.tbl_map(function(t)
+                                    return t:gsub('\r\n', '\n')
+                                end, stdout_data)
+                            end
                             opts.on_stdout(current_id, stdout_data, 'stdout')
                         end)
                     end
@@ -279,6 +290,11 @@ function M.start(cmd, opts)
                                     return vim.fn.iconv(t, opts.encoding, 'utf-8')
                                 end, stderr_data)
                             end
+                            if opts.text then
+                                stderr_data = vim.tbl_map(function(t)
+                                    return t:gsub('\r\n', '\n')
+                                end, stderr_data)
+                            end
                             opts.on_stderr(current_id, stderr_data)
                         end)
                     end
@@ -295,12 +311,17 @@ function M.start(cmd, opts)
                     _jobs['jobid_' .. current_id].state.stderr_eof, stderr_data =
                         buffered_data(_jobs['jobid_' .. current_id].state.stderr_eof, data)
                     if #stderr_data > 0 then
-                        if opts.encoding then
-                            stderr_data = vim.tbl_map(function(t)
-                                return vim.fn.iconv(t, opts.encoding, 'utf-8')
-                            end, stderr_data)
-                        end
                         vim.schedule(function()
+                            if opts.encoding then
+                                stderr_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stderr_data)
+                            end
+                            if opts.text then
+                                stderr_data = vim.tbl_map(function(t)
+                                    return t:gsub('\r\n', '\n')
+                                end, stderr_data)
+                            end
                             opts.on_stderr(current_id, stderr_data, 'stderr')
                         end)
                     end

@@ -9,6 +9,7 @@ job manager for neovim
 - [APIs](#apis)
 - [Job options](#job-options)
     - [encoding](#encoding)
+    - [text](#text)
 - [Self-Promotion](#self-promotion)
 
 <!-- vim-markdown-toc -->
@@ -90,6 +91,10 @@ job 44 exit code:0 single:0
 
 If the output encoding of a job command is not UTF-8, you can set the encoding option manually.
 job.nvim will then automatically convert all standard output data to UTF-8.
+
+### text
+
+Handle output of a job command as text, replaces all `\r\n` with `\n`.
 
 ## Self-Promotion
 
