@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/wsdjeg/job.nvim/compare/v1.3.0...v1.4.0) (2025-12-07)
+
+
+### Features
+
+* add `opt.text` option ([377b891](https://github.com/wsdjeg/job.nvim/commit/377b8910a457dc0728d947e71b06323eac84310d))
+
+
+### Bug Fixes
+
+* remove text opt ([afe1c14](https://github.com/wsdjeg/job.nvim/commit/afe1c14407cf2355b8f5937dbd6f81eb4dcf4d12))
+
 ## [1.3.0](https://github.com/wsdjeg/job.nvim/compare/v1.2.0...v1.3.0) (2025-12-07)
 
 
