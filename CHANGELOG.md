@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/wsdjeg/job.nvim/compare/v1.2.0...v1.3.0) (2025-12-07)
+
+
+### Features
+
+* support encoding option ([5654b20](https://github.com/wsdjeg/job.nvim/commit/5654b202dc915bcfd3f4988888225f277dfd800f))
+
 ## [1.2.0](https://github.com/wsdjeg/job.nvim/compare/v1.1.0...v1.2.0) (2025-11-22)
 
 
