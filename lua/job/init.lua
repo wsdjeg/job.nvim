@@ -226,6 +226,18 @@ function M.start(cmd, opts)
                         end)
                     end
                 elseif data == nil then
+                    if _jobs['jobid_' .. current_id].state.stdout_eof ~= '' then
+                        local stdout_data = { _jobs['jobid_' .. current_id].state.stdout_eof }
+                        _jobs['jobid_' .. current_id].state.stdout_eof = ''
+                        vim.schedule(function()
+                            if opts.encoding then
+                                stdout_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stdout_data)
+                            end
+                            opts.on_stdout(current_id, stdout_data)
+                        end)
+                    end
                     if stdout and not stdout:is_closing() then
                         stdout:close()
                     end
@@ -248,6 +260,18 @@ function M.start(cmd, opts)
                         end)
                     end
                 elseif data == nil then
+                    if _jobs['jobid_' .. current_id].state.stdout_eof ~= '' then
+                        local stdout_data = { _jobs['jobid_' .. current_id].state.stdout_eof }
+                        _jobs['jobid_' .. current_id].state.stdout_eof = ''
+                        vim.schedule(function()
+                            if opts.encoding then
+                                stdout_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stdout_data)
+                            end
+                            opts.on_stdout(current_id, stdout_data, 'stdout')
+                        end)
+                    end
                     if stdout and not stdout:is_closing() then
                         stdout:close()
                     end
@@ -283,6 +307,18 @@ function M.start(cmd, opts)
                         end)
                     end
                 elseif data == nil then
+                    if _jobs['jobid_' .. current_id].state.stderr_eof ~= '' then
+                        local stderr_data = { _jobs['jobid_' .. current_id].state.stderr_eof }
+                        _jobs['jobid_' .. current_id].state.stderr_eof = ''
+                        vim.schedule(function()
+                            if opts.encoding then
+                                stderr_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stderr_data)
+                            end
+                            opts.on_stderr(current_id, stderr_data)
+                        end)
+                    end
                     if stderr and not stderr:is_closing() then
                         stderr:close()
                     end
@@ -305,6 +341,18 @@ function M.start(cmd, opts)
                         end)
                     end
                 elseif data == nil then
+                    if _jobs['jobid_' .. current_id].state.stderr_eof ~= '' then
+                        local stderr_data = { _jobs['jobid_' .. current_id].state.stderr_eof }
+                        _jobs['jobid_' .. current_id].state.stderr_eof = ''
+                        vim.schedule(function()
+                            if opts.encoding then
+                                stderr_data = vim.tbl_map(function(t)
+                                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                                end, stderr_data)
+                            end
+                            opts.on_stderr(current_id, stderr_data, 'stderr')
+                        end)
+                    end
                     if stderr and not stderr:is_closing() then
                         stderr:close()
                     end
