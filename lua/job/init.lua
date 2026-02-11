@@ -47,8 +47,8 @@ local function buffered_data(eof, data)
     local std_data = vim.split(data, '\n')
     if #std_data > 1 then
         std_data[1] = eof .. std_data[1]
-        table.remove(std_data, #std_data)
         eof = std_data[#std_data] == '' and '' or std_data[#std_data]
+        table.remove(std_data, #std_data)
     elseif #std_data == 1 then
         std_data = {}
         if std_data[1] == '' and eof ~= '' then
