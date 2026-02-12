@@ -50,12 +50,14 @@ local function buffered_data(eof, data)
         eof = std_data[#std_data] == '' and '' or std_data[#std_data]
         table.remove(std_data, #std_data)
     elseif #std_data == 1 then
-        std_data = {}
         if std_data[1] == '' and eof ~= '' then
-            table.insert(std_data, eof)
+            std_data = {eof}
             eof = ''
+        elseif std_data[1] == '' and eof == '' then
+            std_data = {}
         elseif std_data[#std_data] ~= '' then
             eof = std_data[#std_data]
+            std_data = {}
         end
     end
     return eof, std_data
