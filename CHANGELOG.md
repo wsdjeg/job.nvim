@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.1](https://github.com/wsdjeg/job.nvim/compare/v1.4.0...v1.4.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* annotations improved and code format ([9cc4553](https://github.com/wsdjeg/job.nvim/commit/9cc4553b4426aae328c1c9135a9dd7f464678f49))
+* buffering was not correctly processed ([#8](https://github.com/wsdjeg/job.nvim/issues/8)) ([980fdb2](https://github.com/wsdjeg/job.nvim/commit/980fdb2db08726ae1fa4dcb99f43d90c96fdb372))
+* fix buffered_data function ([e8aa319](https://github.com/wsdjeg/job.nvim/commit/e8aa31928a0389b2024dd9ad655122bbc85acae2))
+
 ## [1.4.0](https://github.com/wsdjeg/job.nvim/compare/v1.3.0...v1.4.0) (2025-12-07)
 
 
