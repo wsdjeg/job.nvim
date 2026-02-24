@@ -13,6 +13,7 @@
 ---@field pid string|integer
 ---@field stderr_eof string
 ---@field stdout_eof string
+---@field exited boolean
 
 --- @class JobOpts
 --- @field on_stderr? function
@@ -188,6 +189,9 @@ function M.start(cmd, opts)
         stdin:close()
       end
       local job = _jobs['jobid_' .. current_id]
+      if job and job.state then
+        job.state.exited = true
+      end
 
       if job and job.handle and not job.handle:is_closing() then
         job.handle:close()
@@ -233,6 +237,7 @@ function M.start(cmd, opts)
     pid = pid,
     stderr_eof = '',
     stdout_eof = '',
+    exited = false,
   })
   -- logger.debug(vim.inspect(_jobs['jobid_' .. _jobid]))
   if opts.on_stdout then
@@ -480,5 +485,13 @@ function M.stop(id, signal)
     handle:kill(signal)
   end
 end
+
+--- @param id integer
+--- @return boolean
+function M.is_running(id)
+  local job = _jobs['jobid_' .. id]
+  return job ~= nil and not job.state.exited
+end
+
 return M
 -- vim: set ts=4 sts=4 sw=4 et ai si sta:

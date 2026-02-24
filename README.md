@@ -19,6 +19,7 @@ job manager for neovim
     - [`job.stop(id, signal)`](#jobstopid-signal)
     - [`job.send(id, data)`](#jobsendid-data)
     - [`job.chanclose(id, t)`](#jobchancloseid-t)
+    - [`job.is_running(id)`](#jobis_runningid)
 - [Job options](#job-options)
     - [encoding](#encoding)
     - [cwd](#cwd)
@@ -160,6 +161,10 @@ end
 
 - `id` (integer): job ID.
 - `t` (string): which channel to close: `"stdin"`, `"stdout"`, or `"stderr"`.
+
+### `job.is_running(id)`
+
+- `id` (integer): job ID.
 
 ## Job options
 
