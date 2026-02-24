@@ -14,6 +14,8 @@
 ---@field stderr_eof string
 ---@field stdout_eof string
 ---@field exited boolean
+---@field exit_code integer|nil
+---@field exit_signal integer|nil
 
 --- @class JobOpts
 --- @field on_stderr? function
@@ -191,6 +193,8 @@ function M.start(cmd, opts)
       local job = _jobs['jobid_' .. current_id]
       if job and job.state then
         job.state.exited = true
+        job.state.exit_code = code
+        job.state.exit_signal = signin
       end
 
       if job and job.handle and not job.handle:is_closing() then
@@ -202,11 +206,16 @@ function M.start(cmd, opts)
       end)
     end
   else
-    exit_cb = function()
+    exit_cb = function(code, signin)
       if stdin and not stdin:is_closing() then
         stdin:close()
       end
       local job = _jobs['jobid_' .. current_id]
+      if job and job.state then
+        job.state.exited = true
+        job.state.exit_code = code
+        job.state.exit_signal = signin
+      end
 
       if job and job.handle and not job.handle:is_closing() then
         job.handle:close()
@@ -238,6 +247,8 @@ function M.start(cmd, opts)
     stderr_eof = '',
     stdout_eof = '',
     exited = false,
+    exit_code = nil,
+    exit_signal = nil,
   })
   -- logger.debug(vim.inspect(_jobs['jobid_' .. _jobid]))
   if opts.on_stdout then
@@ -491,6 +502,59 @@ end
 function M.is_running(id)
   local job = _jobs['jobid_' .. id]
   return job ~= nil and not job.state.exited
+end
+
+--- Waits for Job and it's on_exit handler to complete.
+--- {id} is the Job ID of returned by Job.start() function.
+--- {timeout} is the maximum waiting time in milliseconds. If
+--- omitted or -1, wait forever.
+---
+--- Returns a integer, which is the status of specific job:
+--- 	Exit-code, if the job exited
+--- 	-1 if the timeout was exceeded
+--- 	-2 if the wait function is cancelled by `<C-c>`
+--- 	-3 if the job-id is invalid
+---
+--- NOTE: press Ctrl-c on Job.wait will not kill the Job.
+---
+--- @param id integer
+--- @param timeout? integer  -- ms, -1 or nil means wait forever
+--- @return integer
+function M.wait(id, timeout)
+  local job = _jobs['jobid_' .. id]
+  if not job then
+    return -3 -- invalid job-id
+  end
+
+  if not timeout or timeout == -1 then
+    timeout = 2 ^ 32 - 1
+  end
+
+  -- poll only
+  if timeout == 0 then
+    if job.state.exited and job.state.exit_code then
+      return job.state.exit_code
+    end
+    return -1
+  end
+
+  -- • If {callback} returns `true` during the {time}: `true, nil`
+  -- • If {callback} never returns `true` during the {time}: `false, -1`
+  -- • If {callback} is interrupted during the {time}: `false, -2`
+  -- • If {callback} errors, the error is raised.
+  local _, reason = vim.wait(timeout, function()
+    return job.state.exited
+  end)
+
+  if not reason then
+    return job.state.exit_code
+  end
+
+  -- interrupted (CTRL-C)
+  if reason == -2 then
+    return -2
+  end
+  return -1
 end
 
 return M

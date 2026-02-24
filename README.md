@@ -20,6 +20,7 @@ job manager for neovim
     - [`job.send(id, data)`](#jobsendid-data)
     - [`job.chanclose(id, t)`](#jobchancloseid-t)
     - [`job.is_running(id)`](#jobis_runningid)
+    - [`job.wait(id, timeout)`](#jobwaitid-timeout)
 - [Job options](#job-options)
     - [encoding](#encoding)
     - [cwd](#cwd)
@@ -165,6 +166,11 @@ end
 ### `job.is_running(id)`
 
 - `id` (integer): job ID.
+
+### `job.wait(id, timeout)`
+
+- `id` (integer): job ID.
+- `timeout` (integer): maximum waiting time in milliseconds.
 
 ## Job options
 
