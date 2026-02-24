@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/wsdjeg/job.nvim/compare/v1.4.1...v1.5.0) (2026-02-24)
+
+
+### Features
+
+* add `job.is_running(id)` function ([b04bf21](https://github.com/wsdjeg/job.nvim/commit/b04bf21e8f8a001d9555d3894e4aa50cc8e17a04))
+* add job.wait(id, timeout) function ([f15e41a](https://github.com/wsdjeg/job.nvim/commit/f15e41a40302c483decedffc3b3111b92a5f254a))
+
+
+### Bug Fixes
+
+* add function annotations ([6c2d365](https://github.com/wsdjeg/job.nvim/commit/6c2d365356af6ab75c332f5b640f85d2c3665c2f))
+
 ## [1.4.1](https://github.com/wsdjeg/job.nvim/compare/v1.4.0...v1.4.1) (2026-02-12)
 
 
