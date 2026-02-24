@@ -110,12 +110,20 @@ local function setup_env(env, clear_env) -- {{{
 end
 -- }}}
 
---- @param cmd string[]|string Spawns {cmd} as a job.
---- @param opts JobOpts job options
---- @return 0|-1|-2 job_id # jobid if job run successfully.
----         0: if type of cmd is wrong
----        -1: if cmd[1] is not executable
----        -2: if opts.cwd is not a directory
+--- Spawns {cmd} as a job.
+--- {cmd} can be a string or a table of strings. If {cmd} is a string, it will be
+--- executed through the shell. If {cmd} is a table, it will be executed directly.
+--- {opts} is a table of job options (see JobOpts).
+---
+--- Returns an integer, which is the job id if job runs successfully:
+--- 	job id: if job started successfully
+--- 	0: if type of {cmd} is wrong
+--- 	-1: if {cmd}[1] is not executable
+--- 	-2: if {opts}.cwd is not a directory
+---
+--- @param cmd string[]|string
+--- @param opts JobOpts
+--- @return integer
 function M.start(cmd, opts)
   if opts and opts.cwd and vim.fn.isdirectory(opts.cwd) ~= 1 then
     return -2
@@ -436,8 +444,15 @@ function M.start(cmd, opts)
   return current_id
 end
 
---- @param id integer job id
---- @param data string[]|string|nil  {data} may be a string or a table of string.
+--- Sends {data} to stdin of job {id}.
+--- {id} is the Job ID returned by Job.start().
+--- {data} may be a string or a table of strings. If {data} is nil or empty,
+--- stdin will be closed.
+---
+--- NOTE: If job {id} does not exist or has no stdin stream, an error is raised.
+---
+--- @param id integer
+--- @param data string[]|string|nil
 function M.send(id, data) -- {{{
   if not _jobs['jobid_' .. id] then
     error('Unable to find job: ' .. id)
@@ -468,8 +483,14 @@ function M.send(id, data) -- {{{
   stdin:write('\n')
 end
 
---- @param id integer job id
---- @param t 'stdin'|'stdout'|'stderr' std type, stdin, stdout or stderr
+--- Closes channel {t} of job {id}.
+--- {id} is the Job ID returned by Job.start().
+--- {t} can be 'stdin', 'stdout', or 'stderr'.
+---
+--- NOTE: If job {id} does not exist or {t} is invalid, an error is raised.
+---
+--- @param id integer
+--- @param t 'stdin'|'stdout'|'stderr'
 function M.chanclose(id, t)
   if not _jobs['jobid_' .. id] then
     error('Unable to find job: ' .. id)
@@ -484,7 +505,13 @@ function M.chanclose(id, t)
   end
 end
 
---- @param id integer stop job with specific {id}
+--- Stops job {id} by sending {signal}.
+--- {id} is the Job ID returned by Job.start().
+--- {signal} is the signal number to send (e.g., 9 for SIGKILL).
+---
+--- NOTE: If job {id} does not exist, this function does nothing.
+---
+--- @param id integer
 --- @param signal integer
 function M.stop(id, signal)
   if not (id and _jobs['jobid_' .. id]) then
