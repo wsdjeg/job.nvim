@@ -634,5 +634,12 @@ function M.wait(id, timeout)
   return -1
 end
 
+function M.pid(id)
+  local job = _jobs['jobid_' .. id]
+  if job then
+    return job.state.pid
+  end
+end
+
 return M
 -- vim: set ts=4 sts=4 sw=4 et ai si sta:
