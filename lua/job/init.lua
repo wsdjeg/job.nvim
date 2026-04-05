@@ -27,6 +27,7 @@
 --- @field env? table<string, string|number>
 --- @field encoding? string
 --- @field raw? boolean
+--- @field timeout? integer
 
 ---@class JobObj
 ---@field id integer
@@ -491,6 +492,18 @@ function M.start(cmd, opts)
       stderr:close()
     end)
   end
+
+  if opts.timeout then
+    local timer = uv.new_timer()
+    if timer then
+      timer:start(opts.timeout, 0, function()
+        timer:stop()
+        timer:close()
+        M.stop(current_id, 15)
+      end)
+    end
+  end
+
   return current_id
 end
 
