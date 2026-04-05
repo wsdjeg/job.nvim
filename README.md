@@ -27,6 +27,7 @@ job manager for neovim
     - [detached](#detached)
     - [clear_env](#clear_env)
     - [env](#env)
+    - [timeout](#timeout)
 - [Error codes](#error-codes)
 - [Callback signatures](#callback-signatures)
     - [`on_stdout(id, data[, stream])`](#on_stdoutid-data-stream)
@@ -213,6 +214,21 @@ Table of environment variables to set for the job. Values can be strings or numb
 job.start({ 'printenv', 'MY_VAR' }, {
     env = { MY_VAR = 'hello' },
     on_stdout = function(id, data) vim.print(data) end,
+})
+```
+
+### timeout
+
+Timeout in milliseconds after which the job will be automatically terminated with SIGTERM (signal 15). Useful for preventing long-running jobs from hanging indefinitely.
+
+```lua
+-- Kill the job if it runs longer than 5 seconds
+job.start({ 'sleep', '10' }, {
+    timeout = 5000,
+    on_exit = function(id, code, signal)
+        -- code: 143 (128 + 15) means killed by SIGTERM
+        print('job ' .. id .. ' exited with code ' .. code)
+    end,
 })
 ```
 
