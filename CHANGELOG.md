@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0](https://github.com/wsdjeg/job.nvim/compare/v1.5.0...v1.6.0) (2026-04-05)
+
+
+### Features
+
+* add job.pid(id) function ([a773a87](https://github.com/wsdjeg/job.nvim/commit/a773a879fefab4281df8025c111506ce07139a0e))
+* add raw option ([d558bac](https://github.com/wsdjeg/job.nvim/commit/d558bac93c195db6f463a90e2b526000bd543847))
+* support timeout option ([3063e76](https://github.com/wsdjeg/job.nvim/commit/3063e7616fa3a3b48df691804292e55f3d8facbe))
+
 ## [1.5.0](https://github.com/wsdjeg/job.nvim/compare/v1.4.1...v1.5.0) (2026-02-24)
 
 
