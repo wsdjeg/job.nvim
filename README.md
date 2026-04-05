@@ -2,6 +2,7 @@
 
 job manager for neovim
 
+[![Run Tests](https://github.com/wsdjeg/job.nvim/actions/workflows/test.yml/badge.svg)](https://github.com/wsdjeg/job.nvim/actions/workflows/test.yml)
 [![GitHub License](https://img.shields.io/github/license/wsdjeg/job.nvim)](LICENSE)
 [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/wsdjeg/job.nvim)](https://github.com/wsdjeg/job.nvim/issues)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/wsdjeg/job.nvim)](https://github.com/wsdjeg/job.nvim/commits/master/)
