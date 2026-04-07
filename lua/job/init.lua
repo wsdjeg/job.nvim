@@ -6,14 +6,11 @@
 -- License: GPLv3
 --=============================================================================
 
--- Signal constants
-local SIGTERM = 15
-
 ---@class JobObjState
 ---@field stdout uv.uv_pipe_t|nil
 ---@field stderr uv.uv_pipe_t|nil
 ---@field stdin uv.uv_pipe_t|nil
----@field pid integer
+---@field pid string|integer
 ---@field stderr_eof string
 ---@field stdout_eof string
 ---@field exited boolean
@@ -96,10 +93,10 @@ local function default_dev() -- {{{
 end
 -- }}}
 
----@param clear_env boolean
 ---@param env table<string, string|number>
+---@param clear_env boolean
 ---@return string[] renv
-local function setup_env(clear_env, env) -- {{{
+local function setup_env(env, clear_env) -- {{{
   if clear_env then
     return env
   end
@@ -114,91 +111,6 @@ local function setup_env(clear_env, env) -- {{{
   return renv
 end
 -- }}}
-
---- 通用的 stream 处理器设置函数（替代重复的 stdout/stderr 代码）
----@param job_id integer
----@param stream uv.uv_pipe_t
----@param opts JobOpts
----@param stream_name 'stdout'|'stderr'
-local function setup_stream_handler(job_id, stream, opts, stream_name)
-  local job_key = 'jobid_' .. job_id
-  local job = _jobs[job_key]
-  if not job then return end
-
-  local state = job.state
-  local eof_key = stream_name .. '_eof'
-  local callback = stream_name == 'stdout' and opts.on_stdout or opts.on_stderr
-
-  -- 如果没有回调，设置默认处理：收到 EOF 时关闭 stream
-  if not callback then
-    uv.read_start(stream, function(_, data)
-      if not stream or stream:is_closing() or data then
-        return
-      end
-      stream:close()
-    end)
-    return
-  end
-
-  local nparams = debug.getinfo(callback).nparams
-
-  -- 编码转换辅助函数
-  local function convert_encoding(data_table)
-    if not opts.encoding then return data_table end
-    return vim.tbl_map(function(t)
-      return vim.fn.iconv(t, opts.encoding, 'utf-8')
-    end, data_table)
-  end
-
-  -- 调用回调的辅助函数
-  local function invoke_callback(data_table)
-    vim.schedule(function()
-      local converted = convert_encoding(data_table)
-      if nparams == 2 then
-        callback(job_id, converted)
-      else
-        callback(job_id, converted, stream_name)
-      end
-    end)
-  end
-
-  -- Raw mode: 直接传递原始数据块
-  if opts.raw then
-    uv.read_start(stream, function(_, data)
-      if data then
-        invoke_callback({ data })
-      else
-        -- EOF
-        if stream and not stream:is_closing() then
-          stream:close()
-        end
-      end
-    end)
-    return
-  end
-
-  -- Default: line-buffered mode
-  uv.read_start(stream, function(_, data)
-    if data then
-      local stream_data
-      state[eof_key], stream_data = buffered_data(state[eof_key], data)
-      if #stream_data > 0 then
-        invoke_callback(stream_data)
-      end
-      return
-    end
-
-    -- EOF: 发送剩余缓冲数据
-    if state[eof_key] ~= '' then
-      invoke_callback({ state[eof_key] })
-      state[eof_key] = ''
-    end
-
-    if stream and not stream:is_closing() then
-      stream:close()
-    end
-  end)
-end
 
 --- Spawns {cmd} as a job.
 --- {cmd} can be a string or a table of strings. If {cmd} is a string, it will be
@@ -273,7 +185,7 @@ function M.start(cmd, opts)
     cwd = opts.cwd or nil,
     hide = true,
     detached = opts.detached or nil,
-    env = setup_env(opts.clear_env, opts.env),
+    env = setup_env(opts.env, opts.clear_env),
   }
   _jobid = _jobid + 1
   local current_id = _jobid
@@ -299,9 +211,6 @@ function M.start(cmd, opts)
         job.handle:close()
       end
 
-      -- 清理 job 对象，防止内存泄漏
-      _jobs['jobid_' .. current_id] = nil
-
       vim.schedule(function()
         opts.on_exit(current_id, code, signin)
       end)
@@ -321,9 +230,6 @@ function M.start(cmd, opts)
       if job and job.handle and not job.handle:is_closing() then
         job.handle:close()
       end
-
-      -- 清理 job 对象，防止内存泄漏
-      _jobs['jobid_' .. current_id] = nil
     end
   end
 
@@ -355,10 +261,237 @@ function M.start(cmd, opts)
     exit_signal = nil,
   })
   -- logger.debug(vim.inspect(_jobs['jobid_' .. _jobid]))
+  if opts.on_stdout then
+    local nparams = debug.getinfo(opts.on_stdout).nparams
 
-  -- 使用通用 stream 处理器（替代重复的 stdout/stderr 代码）
-  setup_stream_handler(current_id, stdout, opts, 'stdout')
-  setup_stream_handler(current_id, stderr, opts, 'stderr')
+    -- Raw mode: no buffering, pass raw data chunks directly
+    if opts.raw then
+      uv.read_start(stdout, function(_, data)
+        if data then
+          vim.schedule(function()
+            if opts.encoding then
+              data = vim.fn.iconv(data, opts.encoding, 'utf-8')
+            end
+            if nparams == 2 then
+              opts.on_stdout(current_id, { data })
+            else
+              opts.on_stdout(current_id, { data }, 'stdout')
+            end
+          end)
+        else
+          -- EOF
+          if stdout and not stdout:is_closing() then
+            stdout:close()
+          end
+        end
+      end)
+    else
+      -- Default: line-buffered mode
+      if nparams == 2 then
+        uv.read_start(stdout, function(_, data)
+          if data then
+            local stdout_data
+            _jobs['jobid_' .. current_id].state.stdout_eof, stdout_data =
+              buffered_data(
+                _jobs['jobid_' .. current_id].state.stdout_eof,
+                data
+              )
+            if #stdout_data > 0 then
+              vim.schedule(function()
+                if opts.encoding then
+                  stdout_data = vim.tbl_map(function(t)
+                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                  end, stdout_data)
+                end
+                opts.on_stdout(current_id, stdout_data)
+              end)
+            end
+            return
+          end
+
+          if _jobs['jobid_' .. current_id].state.stdout_eof ~= '' then
+            local stdout_data =
+              { _jobs['jobid_' .. current_id].state.stdout_eof }
+            _jobs['jobid_' .. current_id].state.stdout_eof = ''
+            vim.schedule(function()
+              if opts.encoding then
+                stdout_data = vim.tbl_map(function(t)
+                  return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                end, stdout_data)
+              end
+              opts.on_stdout(current_id, stdout_data)
+            end)
+          end
+          if stdout and not stdout:is_closing() then
+            stdout:close()
+          end
+        end)
+      else
+        uv.read_start(stdout, function(_, data)
+          if data then
+            local stdout_data
+            _jobs['jobid_' .. current_id].state.stdout_eof, stdout_data =
+              buffered_data(
+                _jobs['jobid_' .. current_id].state.stdout_eof,
+                data
+              )
+            if #stdout_data > 0 then
+              vim.schedule(function()
+                if opts.encoding then
+                  stdout_data = vim.tbl_map(function(t)
+                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                  end, stdout_data)
+                end
+                opts.on_stdout(current_id, stdout_data, 'stdout')
+              end)
+            end
+            return
+          end
+
+          if _jobs['jobid_' .. current_id].state.stdout_eof ~= '' then
+            local stdout_data =
+              { _jobs['jobid_' .. current_id].state.stdout_eof }
+            _jobs['jobid_' .. current_id].state.stdout_eof = ''
+            vim.schedule(function()
+              if opts.encoding then
+                stdout_data = vim.tbl_map(function(t)
+                  return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                end, stdout_data)
+              end
+              opts.on_stdout(current_id, stdout_data, 'stdout')
+            end)
+          end
+          if stdout and not stdout:is_closing() then
+            stdout:close()
+          end
+        end)
+      end
+    end
+  else
+    uv.read_start(stdout, function(_, data)
+      if data or not stdout or stdout:is_closing() then
+        return
+      end
+
+      stdout:close()
+    end)
+  end
+
+  if opts.on_stderr then
+    local nparams = debug.getinfo(opts.on_stderr).nparams
+
+    -- Raw mode: no buffering, pass raw data chunks directly
+    if opts.raw then
+      uv.read_start(stderr, function(_, data)
+        if data then
+          vim.schedule(function()
+            if opts.encoding then
+              data = vim.fn.iconv(data, opts.encoding, 'utf-8')
+            end
+            if nparams == 2 then
+              opts.on_stderr(current_id, { data })
+            else
+              opts.on_stderr(current_id, { data }, 'stderr')
+            end
+          end)
+        else
+          -- EOF
+          if stderr and not stderr:is_closing() then
+            stderr:close()
+          end
+        end
+      end)
+    else
+      -- Default: line-buffered mode
+      if nparams == 2 then
+        uv.read_start(stderr, function(_, data)
+          if data then
+            local stderr_data
+            _jobs['jobid_' .. current_id].state.stderr_eof, stderr_data =
+              buffered_data(
+                _jobs['jobid_' .. current_id].state.stderr_eof,
+                data
+              )
+            if #stderr_data > 0 then
+              vim.schedule(function()
+                if opts.encoding then
+                  stderr_data = vim.tbl_map(function(t)
+                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                  end, stderr_data)
+                end
+                opts.on_stderr(current_id, stderr_data)
+              end)
+            end
+            return
+          end
+
+          if _jobs['jobid_' .. current_id].state.stderr_eof ~= '' then
+            local stderr_data =
+              { _jobs['jobid_' .. current_id].state.stderr_eof }
+            _jobs['jobid_' .. current_id].state.stderr_eof = ''
+            vim.schedule(function()
+              if opts.encoding then
+                stderr_data = vim.tbl_map(function(t)
+                  return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                end, stderr_data)
+              end
+              opts.on_stderr(current_id, stderr_data)
+            end)
+          end
+          if stderr and not stderr:is_closing() then
+            stderr:close()
+          end
+        end)
+      else
+        uv.read_start(stderr, function(_, data)
+          if data then
+            local stderr_data
+            _jobs['jobid_' .. current_id].state.stderr_eof, stderr_data =
+              buffered_data(
+                _jobs['jobid_' .. current_id].state.stderr_eof,
+                data
+              )
+            if #stderr_data > 0 then
+              vim.schedule(function()
+                if opts.encoding then
+                  stderr_data = vim.tbl_map(function(t)
+                    return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                  end, stderr_data)
+                end
+                opts.on_stderr(current_id, stderr_data, 'stderr')
+              end)
+            end
+            return
+          end
+
+          if _jobs['jobid_' .. current_id].state.stderr_eof ~= '' then
+            local stderr_data =
+              { _jobs['jobid_' .. current_id].state.stderr_eof }
+            _jobs['jobid_' .. current_id].state.stderr_eof = ''
+            vim.schedule(function()
+              if opts.encoding then
+                stderr_data = vim.tbl_map(function(t)
+                  return vim.fn.iconv(t, opts.encoding, 'utf-8')
+                end, stderr_data)
+              end
+              opts.on_stderr(current_id, stderr_data, 'stderr')
+            end)
+          end
+          if stderr and not stderr:is_closing() then
+            stderr:close()
+          end
+        end)
+      end
+    end
+  else
+    uv.read_start(stderr, function(_, data)
+      if data or not stderr or stderr:is_closing() then
+        return
+      end
+
+      stderr:close()
+    end)
+  end
 
   if opts.timeout then
     local timer = uv.new_timer()
@@ -366,7 +499,7 @@ function M.start(cmd, opts)
       timer:start(opts.timeout, 0, function()
         timer:stop()
         timer:close()
-        M.stop(current_id, SIGTERM)
+        M.stop(current_id, 15)
       end)
     end
   end
@@ -514,8 +647,6 @@ function M.wait(id, timeout)
   return -1
 end
 
---- @param id integer
---- @return integer|nil
 function M.pid(id)
   local job = _jobs['jobid_' .. id]
   if job then
@@ -525,4 +656,3 @@ end
 
 return M
 -- vim: set ts=4 sts=4 sw=4 et ai si sta:
-
