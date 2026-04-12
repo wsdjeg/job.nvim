@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/wsdjeg/job.nvim/compare/v1.6.0...v1.6.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* improved/corrected annotations, small code corrections ([#12](https://github.com/wsdjeg/job.nvim/issues/12)) ([437fbfd](https://github.com/wsdjeg/job.nvim/commit/437fbfd10e449dbe25156250eec5e1ad5a24c8ec))
+* skip preview commit ([00038b1](https://github.com/wsdjeg/job.nvim/commit/00038b1da18d520f89a48d399c16d7b14467741e))
+
 ## [1.6.0](https://github.com/wsdjeg/job.nvim/compare/v1.5.0...v1.6.0) (2026-04-05)
 
 
