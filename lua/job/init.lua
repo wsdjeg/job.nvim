@@ -31,7 +31,7 @@
 
 ---@class JobObj
 ---@field id integer
----@field handle uv.uv_handle_t
+---@field handle uv.uv_process_t
 ---@field opt JobOpts
 ---@field state JobObjState
 
@@ -84,7 +84,7 @@ end
 
 ---@return table<string, string> env
 local function default_dev() -- {{{
-  local env = vim.fn.environ() ---@type table<string, string>
+  local env = vim.fn.environ() --[[@as table<string, string>]]
   env.NVIM = vim.v.servername
   env.NVIM_LISTEN_ADDRESS = nil
   env.NVIM_LOG_FILE = nil
@@ -95,7 +95,7 @@ end
 
 ---@param env table<string, string|number>
 ---@param clear_env boolean
----@return string[] renv
+---@return string[]|table<string, string|number> renv
 local function setup_env(env, clear_env) -- {{{
   if clear_env then
     return env
@@ -125,7 +125,7 @@ end
 ---
 --- @param cmd string[]|string
 --- @param opts JobOpts
---- @return integer
+--- @return integer job_id
 function M.start(cmd, opts)
   if opts and opts.cwd and vim.fn.isdirectory(opts.cwd) ~= 1 then
     return -2
@@ -193,7 +193,7 @@ function M.start(cmd, opts)
   -- https://github.com//neovim/neovim/blob/d9353bd44285a9a3abbe97410730fbf9a252aee3/runtime/lua/vim/_system.lua#L275
   -- #30846: Do not close stdout/stderr here, as they may still have data to
   -- read. They will be closed in uv.read_start on EOF.
-  if opts.on_exit then
+  if opts.on_exit and vim.is_callable(opts.on_exit) then
     ---@param code integer
     ---@param signin integer
     exit_cb = function(code, signin)
@@ -216,6 +216,8 @@ function M.start(cmd, opts)
       end)
     end
   else
+    ---@param code integer
+    ---@param signin integer
     exit_cb = function(code, signin)
       if stdin and not stdin:is_closing() then
         stdin:close()
@@ -261,7 +263,7 @@ function M.start(cmd, opts)
     exit_signal = nil,
   })
   -- logger.debug(vim.inspect(_jobs['jobid_' .. _jobid]))
-  if opts.on_stdout then
+  if opts.on_stdout and vim.is_callable(opts.on_stdout) then
     local nparams = debug.getinfo(opts.on_stdout).nparams
 
     -- Raw mode: no buffering, pass raw data chunks directly
@@ -377,7 +379,7 @@ function M.start(cmd, opts)
     end)
   end
 
-  if opts.on_stderr then
+  if opts.on_stderr and vim.is_callable(opts.on_stderr) then
     local nparams = debug.getinfo(opts.on_stderr).nparams
 
     -- Raw mode: no buffering, pass raw data chunks directly
@@ -562,7 +564,7 @@ function M.chanclose(id, t)
     error('type can only be: stdout, stdin or stderr')
   end
 
-  local stream = _jobs['jobid_' .. id].state[t] ---@type uv.uv_pipe_t|nil
+  local stream = _jobs['jobid_' .. id].state[t] --[[@as uv.uv_pipe_t|nil]]
   if stream and not stream:is_closing() then
     stream:close()
   end
@@ -588,7 +590,7 @@ function M.stop(id, signal)
 end
 
 --- @param id integer
---- @return boolean
+--- @return boolean running
 function M.is_running(id)
   local job = _jobs['jobid_' .. id]
   return job ~= nil and not job.state.exited
@@ -609,7 +611,7 @@ end
 ---
 --- @param id integer
 --- @param timeout? integer  -- ms, -1 or nil means wait forever
---- @return integer
+--- @return integer status
 function M.wait(id, timeout)
   local job = _jobs['jobid_' .. id]
   if not job then
@@ -647,6 +649,8 @@ function M.wait(id, timeout)
   return -1
 end
 
+---@param id integer
+---@return string|integer|nil pid
 function M.pid(id)
   local job = _jobs['jobid_' .. id]
   if job then
