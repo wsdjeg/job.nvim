@@ -13,6 +13,7 @@ job manager for neovim
 
 - [Installation](#installation)
 - [Usage](#usage)
+    - [Using PID](#using-pid)
     - [Using a shell command string](#using-a-shell-command-string)
     - [Error handling](#error-handling)
 - [APIs](#apis)
@@ -20,6 +21,7 @@ job manager for neovim
     - [`job.stop(id, signal)`](#jobstopid-signal)
     - [`job.send(id, data)`](#jobsendid-data)
     - [`job.chanclose(id, t)`](#jobchancloseid-t)
+    - [`job.pid(id)`](#jobpidid)
     - [`job.is_running(id)`](#jobis_runningid)
     - [`job.wait(id, timeout)`](#jobwaitid-timeout)
 - [Job options](#job-options)
@@ -111,6 +113,24 @@ job 43 exit code:0 signal:0
 job 44 exit code:0 signal:0
 ```
 
+### Using PID
+
+You can get the process ID (PID) of a running job for external process management:
+
+```lua
+local job = require('job')
+local jobid = job.start({ 'python', 'server.py' }, {
+    on_stdout = function(id, data) vim.print(data) end,
+})
+
+-- Get the process ID
+local pid = job.pid(jobid)
+if pid then
+    print('Server running with PID:', pid)
+    -- You can now use this PID with external tools or save it for later
+end
+```
+
 ### Using a shell command string
 
 ```lua
@@ -144,6 +164,7 @@ end
 | `job.stop(jobid, signal)`   | stop the job with signal (integer)             | none                           |
 | `job.send(jobid, data)`     | send data (string or table of strings) to job  | none                           |
 | `job.chanclose(jobid, std)` | close channel (`stdin`, `stdout`, or `stderr`) | none                           |
+| `job.pid(jobid)`            | get the process ID (PID) of the job            | PID or `nil`                   |
 
 ### `job.start(cmd, opts)`
 
@@ -155,6 +176,8 @@ end
 - `id` (integer): job ID returned by `job.start`.
 - `signal` (integer): POSIX signal number (e.g., 9 for SIGKILL, 15 for SIGTERM).
 
+> **Tip:** You can also use `job.pid()` to get the process ID and send signals using external tools like `kill`.
+
 ### `job.send(id, data)`
 
 - `id` (integer): job ID.
@@ -164,6 +187,24 @@ end
 
 - `id` (integer): job ID.
 - `t` (string): which channel to close: `"stdin"`, `"stdout"`, or `"stderr"`.
+
+### `job.pid(id)`
+
+- `id` (integer): job ID.
+- **Returns** (integer|string|nil): the process ID (PID) of the running job, or `nil` if the job doesn't exist.
+
+Example:
+
+```lua
+local job = require('job')
+local jobid = job.start({ 'sleep', '10' }, {})
+local pid = job.pid(jobid)
+if pid then
+    print('Job PID:', pid)
+    -- You can use the PID with external tools, for example:
+    -- vim.fn.system('kill -9 ' .. pid)  -- force kill the process
+end
+```
 
 ### `job.is_running(id)`
 
@@ -270,3 +311,4 @@ GitHub.
 
 Love this plugin? Follow [me](https://wsdjeg.net/) on
 [GitHub](https://github.com/wsdjeg).
+
