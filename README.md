@@ -1,6 +1,11 @@
 # job.nvim
 
-job manager for neovim
+`job.nvim` is a lightweight, high-performance async job manager for Neovim,
+built on top of `vim.uv` (libuv).
+It provides a simple and clean API for spawning processes, sending data,
+managing I/O streams, and handling timeouts — all without blocking the editor.
+Whether you need to run shell commands, interact with long-running processes,
+or build async pipelines, `job.nvim` offers a composable approach with minimal overhead.
 
 [![Run Tests](https://github.com/wsdjeg/job.nvim/actions/workflows/test.yml/badge.svg)](https://github.com/wsdjeg/job.nvim/actions/workflows/test.yml)
 [![GitHub License](https://img.shields.io/github/license/wsdjeg/job.nvim)](LICENSE)
@@ -11,12 +16,14 @@ job manager for neovim
 
 <!-- vim-markdown-toc GFM -->
 
-- [Installation](#installation)
-- [Usage](#usage)
+- [✨ Features](#-features)
+- [📦 Installation](#-installation)
+- [🔧 Configuration](#-configuration)
+- [⚙️ Basic Usage](#-basic-usage)
     - [Using PID](#using-pid)
     - [Using a shell command string](#using-a-shell-command-string)
     - [Error handling](#error-handling)
-- [APIs](#apis)
+- [📚 APIs](#-apis)
     - [`job.start(cmd, opts)`](#jobstartcmd-opts)
     - [`job.stop(id, signal)`](#jobstopid-signal)
     - [`job.send(id, data)`](#jobsendid-data)
@@ -24,52 +31,86 @@ job manager for neovim
     - [`job.pid(id)`](#jobpidid)
     - [`job.is_running(id)`](#jobis_runningid)
     - [`job.wait(id, timeout)`](#jobwaitid-timeout)
-- [Job options](#job-options)
+- [🎯 Job options](#-job-options)
     - [encoding](#encoding)
     - [cwd](#cwd)
     - [detached](#detached)
     - [clear_env](#clear_env)
     - [env](#env)
     - [timeout](#timeout)
-- [Error codes](#error-codes)
-- [Callback signatures](#callback-signatures)
+- [❌ Error codes](#-error-codes)
+- [📨 Callback signatures](#-callback-signatures)
     - [`on_stdout(id, data[, stream])`](#on_stdoutid-data-stream)
     - [`on_stderr(id, data[, stream])`](#on_stderrid-data-stream)
     - [`on_exit(id, code, signal)`](#on_exitid-code-signal)
-- [Self-Promotion](#self-promotion)
+- [📣 Self-Promotion](#-self-promotion)
+- [💬 Feedback](#-feedback)
+- [🙏 Credits](#-credits)
+- [📄 License](#-license)
 
 <!-- vim-markdown-toc -->
 
-## Installation
+## ✨ Features
 
-Using [nvim-plug](https://github.com/wsdjeg/nvim-plug)
+- High-performance async job execution powered by `vim.uv` (libuv)
+- Simple yet extensible API for process management
+- Support for both string and table command formats
+- Automatic encoding conversion for non-UTF-8 output
+- Process timeout with automatic SIGTERM termination
+- Detached process mode for background tasks
+- Full control over stdin/stdout/stderr channels
+- Process PID retrieval for external management
+- Cross-platform support (Linux, macOS, Windows)
+
+## 📦 Installation
+
+job.nvim works with all major Neovim plugin managers.
+Neovim 0.10+ is recommended for best compatibility.
+
+- **Using [nvim-plug](https://github.com/wsdjeg/nvim-plug)**
+
+  ```lua
+  require('plug').add({
+    {
+      'wsdjeg/job.nvim',
+    },
+  })
+  ```
+
+- **Using [lazy.nvim](https://github.com/folke/lazy.nvim)**
+
+  ```lua
+  {
+    "wsdjeg/job.nvim",
+    config = function()
+      -- No configuration needed
+    end,
+  }
+  ```
+
+- **Using [packer.nvim](https://github.com/wbthomason/packer.nvim)**
+
+  ```lua
+  use({
+    'wsdjeg/job.nvim',
+  })
+  ```
+
+- **Using [luarocks](https://luarocks.org/)**
+
+  ```
+  luarocks install job.nvim
+  ```
+
+## 🔧 Configuration
+
+No configuration is needed. Simply require the module and start using it:
 
 ```lua
-require("plug").add({
-	{
-		"wsdjeg/job.nvim",
-	},
-})
+local job = require('job')
 ```
 
-Using [luarocks](https://luarocks.org/)
-
-```
-luarocks install job.nvim
-```
-
-Alternatively, using [lazy.nvim](https://github.com/folke/lazy.nvim):
-
-```lua
-{
-	"wsdjeg/job.nvim",
-	config = function()
-		-- No configuration needed
-	end,
-}
-```
-
-## Usage
+## ⚙️ Basic Usage
 
 Basic example:
 
@@ -156,7 +197,7 @@ if id <= 0 then
 end
 ```
 
-## APIs
+## 📚 APIs
 
 | function                    | description                                    | returns                        |
 | --------------------------- | ---------------------------------------------- | ------------------------------ |
@@ -169,7 +210,7 @@ end
 ### `job.start(cmd, opts)`
 
 - `cmd` (string|table): command to execute. If a string, it is passed to the shell. If a table, the first element is the executable and the rest are arguments.
-- `opts` (table|nil): job options (see [Job options](#job-options)).
+- `opts` (table|nil): job options (see [Job options](#-job-options)).
 
 ### `job.stop(id, signal)`
 
@@ -215,7 +256,7 @@ end
 - `id` (integer): job ID.
 - `timeout` (integer): maximum waiting time in milliseconds.
 
-## Job options
+## 🎯 Job options
 
 All options are optional.
 
@@ -274,7 +315,7 @@ job.start({ 'sleep', '10' }, {
 })
 ```
 
-## Error codes
+## ❌ Error codes
 
 | code | meaning                                                            |
 | ---- | ------------------------------------------------------------------ |
@@ -282,7 +323,7 @@ job.start({ 'sleep', '10' }, {
 | -1   | command is not executable, or `uv.spawn` failed                    |
 | -2   | `opts.cwd` exists but is not a directory                           |
 
-## Callback signatures
+## 📨 Callback signatures
 
 ### `on_stdout(id, data[, stream])`
 
@@ -304,11 +345,24 @@ Called when the job exits.
 - `code` (integer): exit code.
 - `signal` (integer): signal number (0 if the job exited normally).
 
-## Self-Promotion
+## 📣 Self-Promotion
 
 Like this plugin? Star the repository on
 GitHub.
 
 Love this plugin? Follow [me](https://wsdjeg.net/) on
-[GitHub](https://github.com/wsdjeg).
+[GitHub](https://github.com/wsdjeg) or [Twitter](https://x.com/EricWongDEV).
+
+## 💬 Feedback
+
+If you encounter any bugs or have suggestions, please file an issue in the [issue tracker](https://github.com/wsdjeg/job.nvim/issues)
+
+## 🙏 Credits
+
+- [vim.uv](https://neovim.io/doc/user/luvref.html) — libuv bindings for Neovim
+- [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) — inspiration for the job API design
+
+## 📄 License
+
+Licensed under GPL-3.0.
 
