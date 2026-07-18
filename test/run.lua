@@ -9,16 +9,66 @@ vim.opt.runtimepath:append('.')
 -- Setup package.path to support test submodules
 package.path = 'test/?.lua;lua/?.lua;' .. package.path
 
--- Get all test files dynamically (including subdirectories)
-local test_files = vim.split(vim.fn.globpath('test', '**/*_spec.lua'), '\n')
--- Remove empty string if no matches
-if test_files[#test_files] == '' then
-  table.remove(test_files)
+-- Get test files based on PATTERN parameter
+local function get_test_files()
+  local pattern = _G.TEST_PATTERN
+  -- Clear global to avoid LuaUnit picking it up as a test name
+  _G.TEST_PATTERN = nil
+
+  if not pattern or pattern == '' then
+    -- No PATTERN specified, run all tests
+    local files = vim.split(vim.fn.globpath('test', '**/*_spec.lua'), '\n')
+    if files[#files] == '' then
+      table.remove(files)
+    end
+    return files
+  end
+
+  -- PATTERN parameter specified
+  local files = {}
+
+  -- Check if it's a full path
+  if pattern:match('^test/') or pattern:match('^test\\') then
+    -- Full path provided
+    if vim.fn.filereadable(pattern) == 1 then
+      table.insert(files, pattern)
+    else
+      print(string.format('[ERROR] Test file not found: %s', pattern))
+      return {}
+    end
+  else
+    -- Shorthand: search for matching files
+    -- e.g., "start" -> test/**/*start*_spec.lua
+    files = vim.split(vim.fn.globpath('test', string.format('**/*%s*_spec.lua', pattern)), '\n')
+
+    -- Also try exact match: e.g., "start_spec.lua"
+    if #files == 0 then
+      files = vim.split(vim.fn.globpath('test', string.format('%s*_spec.lua', pattern)), '\n')
+    end
+
+    -- Try with _spec.lua suffix
+    if #files == 0 then
+      files = vim.split(vim.fn.globpath('test', string.format('**/%s_spec.lua', pattern)), '\n')
+    end
+
+    -- Remove empty strings
+    local filtered = {}
+    for _, f in ipairs(files) do
+      if f ~= '' then
+        table.insert(filtered, f)
+      end
+    end
+    files = filtered
+  end
+
+  return files
 end
 
 -- Run all tests
 local function run_tests()
-  print('=== Job.nvim Test Suite ===')
+  local test_files = get_test_files()
+
+  print('=== job.nvim Test Suite ===')
   print(string.format('Found %d test file(s)\n', #test_files))
 
   if #test_files == 0 then
@@ -68,10 +118,11 @@ end
 local exit_code = run_tests()
 
 -- Clean up temporary test files
-local temp_pattern = vim.fn.stdpath('cache') .. '/job_nvim_test_'
+local temp_pattern = '/tmp/job_nvim_test_'
 local temp_files = vim.fn.glob(temp_pattern .. '*', true, true)
 for _, file in ipairs(temp_files) do
   vim.fn.delete(file, 'rf')
 end
 
 os.exit(exit_code)
+
