@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.6.1](https://github.com/wsdjeg/job.nvim/compare/v1.6.0...v1.6.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* improved/corrected annotations, small code corrections ([#12](https://github.com/wsdjeg/job.nvim/issues/12)) ([437fbfd](https://github.com/wsdjeg/job.nvim/commit/437fbfd10e449dbe25156250eec5e1ad5a24c8ec))
+* skip preview commit ([00038b1](https://github.com/wsdjeg/job.nvim/commit/00038b1da18d520f89a48d399c16d7b14467741e))
+
+
+### Code Refactoring
+
+* reduce duplication, fix memory leak and logic error ([0ba020c](https://github.com/wsdjeg/job.nvim/commit/0ba020c326b6513f2554f8d5f69408561acb46d5))
+
+
+### Documentation
+
+* **readme:** add job.pid() documentation ([761495a](https://github.com/wsdjeg/job.nvim/commit/761495af05a242b00a18b8ae926ee41c18da3645))
+* update README to match picker.nvim style ([edfe5a9](https://github.com/wsdjeg/job.nvim/commit/edfe5a96ce9314869f5cb2998490c3cf5d3e29e4))
+
 ## [1.6.0](https://github.com/wsdjeg/job.nvim/compare/v1.5.0...v1.6.0) (2026-04-05)
 
 
